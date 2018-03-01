@@ -1,5 +1,7 @@
 
 import socket
+import sys
+import threading
 
 
 class Chat():
@@ -7,7 +9,7 @@ class Chat():
     def __init__(self, host=socket . gethostname(), port=5000):
         s = socket.socket(type=socket . SOCK_DGRAM)
         s.settimeout(0.5)
-        s.bind((host, ))
+        s.bind((host, port))
         self.__s = s
 
     def _exit(self):
@@ -38,3 +40,25 @@ class Chat():
                 print(data.encode())
             except socket.timeout:
                 pass
+
+    def run(self):
+        handlers = {
+            '/exit': self._exit,
+            '/join': self._join,
+            '/quit': self._quit,
+            '/send': self._send,
+        }
+
+        self.__running = True
+        self.__address = None
+
+        threading.Thread(target=self._receive).start()
+
+        while self.__running:
+            line = sys.stdin.readline().rstrip() + ' '
+            command = line[:line.index(' ')]
+            param = line[line.index(' ')+1:].rstrip()
+            if command in handlers:
+                handlers[command]() if param == ' ' else handlers[command](param)
+            else:
+                print('Uknown command: ', command)

@@ -6,6 +6,7 @@
 import socket
 import sys
 import threading
+import subprocess
 
 
 class Chat:
@@ -21,7 +22,9 @@ class Chat:
             '/exit': self._exit,
             '/quit': self._quit,
             '/join': self._join,
-            '/send': self._send
+            '/send': self._send,
+            '/address': self._client,
+            '/user':self._user,
         }
         self.__running = True
         self.__address = None
@@ -77,6 +80,13 @@ class Chat:
                 pass
             except OSError:
                 return
+
+    def _client(self):
+        print(self.__address)
+
+    def _user(self):
+        self.__user = subprocess.Popen(["whoami"], stdout=subprocess.PIPE)
+        print(self.__user.communicate()[0].decode().rstrip())
 
 
 if __name__ == '__main__':

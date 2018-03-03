@@ -2,7 +2,8 @@ import socket
 import sys
 import threading
 import subprocess
-
+import struct
+import pickle
 
 
 class Chat:

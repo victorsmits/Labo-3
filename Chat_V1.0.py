@@ -1,49 +1,55 @@
-#!/usr/bin/env python3
-# chat.py
-# author: Sébastien Combéfis
-# version: February 15, 2016
-
 import socket
 import sys
 import threading
 import subprocess
+import struct
+import pickle
 
 
 class Chat:
-    def __init__(self, host=socket.gethostname(), port=5000):
-        s = socket.socket(type=socket.SOCK_DGRAM)
-        s.settimeout(0.5)
-        s.bind((host, port))
-        self.__s = s
-        print('Écoute sur {}:{}'.format(host, port))
-
-    def run(self):
-        handlers = {
+    def __init__(self):
+        self.__pseudo = input("enter username: \n")
+        self.__port = None
+        self.__ip = None
+        self._lsUser = {}
+        self._handlers = {
             '/exit': self._exit,
             '/quit': self._quit,
             '/join': self._join,
             '/send': self._send,
             '/address': self._client,
-            '/user':self._user,
+            '/user': self._user,
+            '/server': self._server,
         }
-        self.__running = True
+
+    def run(self):
         self.__address = None
+        self.__running = True
         threading.Thread(target=self._receive).start()
+
         while self.__running:
             line = sys.stdin.readline().rstrip() + ' '
             # Extract the command and the param
             command = line[:line.index(' ')]
             param = line[line.index(' ') + 1:].rstrip()
             # Call the command handler
-            if command in handlers:
+            if command in self._handlers:
                 try:
-                    handlers[command]() if param == '' else handlers[command](param)
+                    self._handlers[command]() if param == '' else self._handlers[command](param)
                 except:
                     print("Erreur lors de l'exécution de la commande.")
             else:
                 print('Command inconnue:', command)
 
+    def _chat(self, host=socket.gethostname(), port=5000):
+        s = socket.socket(type=socket.SOCK_DGRAM)
+        s.settimeout(0.5)
+        s.bind((host, port))
+        self.__s = s
+        print('Écoute sur {}:{}'.format(host, port))
+
     def _exit(self):
+        self._send("disconnect")
         self.__running = False
         self.__address = None
         self.__s.close()
@@ -88,9 +94,18 @@ class Chat:
         self.__user = subprocess.Popen(["whoami"], stdout=subprocess.PIPE)
         print(self.__user.communicate()[0].decode().rstrip())
 
+    def _server(self, param):
+        tokens = param.split(' ')
+        print(tokens)
+        if len(tokens) == 2:
+            try:
+                self.__s.connect((tokens[0], int(tokens[1])))
+            except OSError:
+                print("Communication error with the server")
+
 
 if __name__ == '__main__':
     if len(sys.argv) == 3:
-        Chat(sys.argv[1], int(sys.argv[2])).run()
+        Chat().run()
     else:
         Chat().run()

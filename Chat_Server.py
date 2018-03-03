@@ -5,7 +5,6 @@ import sys
 
 SERVERADDRESS = (socket.gethostname(), 6000)
 
-
 class Server:
     def __init__(self):
         self.__s = socket.socket()

@@ -5,15 +5,21 @@ import subprocess
 import struct
 import pickle
 
-#test branch
+#test 2
+# test branch
 
 class Chat:
     def __init__(self):
         self.__pseudo = input("enter username: \n")
-        self.__port = None
+        self.__port = 5000
         self.__ip = None
         self._lsUser = {}
-        self._handlers = {
+
+    def run(self):
+        self.__address = None
+        self.__running = True
+        #threading.Thread(target=self._receive).start()
+        handlers = {
             '/exit': self._exit,
             '/quit': self._quit,
             '/join': self._join,
@@ -23,31 +29,29 @@ class Chat:
             '/server': self._server,
         }
 
-    def run(self):
-        self.__address = None
-        self.__running = True
-        threading.Thread(target=self._receive).start()
-
         while self.__running:
             line = sys.stdin.readline().rstrip() + ' '
             # Extract the command and the param
             command = line[:line.index(' ')]
             param = line[line.index(' ') + 1:].rstrip()
             # Call the command handler
-            if command in self._handlers:
+            if command in handlers:
                 try:
-                    self._handlers[command]() if param == '' else self._handlers[command](param)
+                    handlers[command]() if param == '' else handlers[command](param)
                 except:
                     print("Erreur lors de l'exécution de la commande.")
             else:
                 print('Command inconnue:', command)
 
-    def _chat(self, host=socket.gethostname(), port=5000):
+    def _chat(self):
         s = socket.socket(type=socket.SOCK_DGRAM)
         s.settimeout(0.5)
+        host = socket.gethostname()
+        port = self.__port
         s.bind((host, port))
         self.__s = s
         print('Écoute sur {}:{}'.format(host, port))
+        #threading.Thread(target=self._receive).start()
 
     def _exit(self):
         self._send("disconnect")
@@ -59,10 +63,10 @@ class Chat:
         self.__address = None
 
     def _join(self, param):
-        tokens = param.split(' ')
+        tokens = self._lsUser[param]
         if len(tokens) == 2:
             try:
-                self.__address = (socket.gethostbyaddr(tokens[0])[0], int(tokens[1]))
+                self.__address = (param, (tokens['ip'], int(tokens['port'])))
                 print('Connecté à {}:{}'.format(*self.__address))
             except OSError:
                 print("Erreur lors de l'envoi du message.")
@@ -79,14 +83,15 @@ class Chat:
                 print('Erreur lors de la réception du message.')
 
     def _receive(self):
-        while self.__running:
-            try:
-                data, address = self.__s.recvfrom(1024)
-                print(data.decode())
-            except socket.timeout:
-                pass
-            except OSError:
-                return
+        if self.__s is not None:
+            while self.__running:
+                try:
+                    data, address = self.__s.recvfrom(1024)
+                    print(data.decode())
+                except socket.timeout:
+                    pass
+                except OSError:
+                    return
 
     def _client(self):
         print(self.__address)
@@ -94,6 +99,28 @@ class Chat:
     def _user(self):
         self.__user = subprocess.Popen(["whoami"], stdout=subprocess.PIPE)
         print(self.__user.communicate()[0].decode().rstrip())
+
+    def _server(self, param):
+        self.__s = socket.socket()
+        tokens = param.split(' ')
+        print(tokens)
+        if len(tokens) == 2:
+            try:
+                self.__s.connect((tokens[0], int(tokens[1])))
+                totalsent = 0
+                msg = pickle.dumps(self.__pseudo.encode())
+                self.__s.send(struct.pack('I', len(msg)))
+                while totalsent < len(msg):
+                    sent = self.__s.send(msg[totalsent:])
+                    totalsent += sent
+                data = self.__s.recv(1024).decode()
+                return data
+            except OSError:
+                print("Communication error with the server")
+
+    def _send_pseudo(self):
+        pass
+
 
 if __name__ == '__main__':
     if len(sys.argv) == 3:

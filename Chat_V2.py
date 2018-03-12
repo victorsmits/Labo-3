@@ -4,12 +4,15 @@ import threading
 import subprocess
 import struct
 import pickle
+from datetime import datetime
+
 
 #test 8
 # test branch
 
 class Chat:
     def __init__(self):
+        self.__s = socket.socket()
         self.__pseudo = input("enter username: \n")
         self.__port = 5000
         self.__ip = None
@@ -18,13 +21,13 @@ class Chat:
     def run(self):
         self.__address = None
         self.__running = True
-        #threading.Thread(target=self._receive).start()
+        threading.Thread(target=self._receive).start()
         handlers = {
             '/exit': self._exit,
             '/quit': self._quit,
             '/join': self._join,
             '/send': self._send,
-            '/address': self._client,
+            '/client': self._client,
             '/user': self._user,
             '/server': self._server,
         }
@@ -51,7 +54,7 @@ class Chat:
         s.bind((host, port))
         self.__s = s
         print('Écoute sur {}:{}'.format(host, port))
-        #threading.Thread(target=self._receive).start()
+        threading.Thread(target=self._receive).start()
 
     def _exit(self):
         self._send("disconnect")
@@ -87,16 +90,37 @@ class Chat:
             while self.__running:
                 try:
                     data, address = self.__s.recvfrom(1024)
-                    print(data.decode())
+                    msg = data.decode()
+                    pseudo = msg.split(" ")[0]
+                    message = msg.split(" ")[1]
+                    print(datetime.now().strftime('%H:%M:%S') + " [" + pseudo + "]" + ": " + message)
+                    if pseudo not in self.__lsUser:
+                        print("Type \"/join " + pseudo + "\" to start chatting with " + pseudo)
+                        self._client()
+
                 except socket.timeout:
                     pass
                 except OSError:
                     return
 
     def _client(self):
-        print(self.__address)
+        list = self._send_request("clients")
+        lsUser = {}
+        for i in list.split('\n')[:-1]:
+            data = i.split(" ")
+            name = data[0]
+            ip = data[1]
+            port = data[2]
+            coord = {'ip': ip, 'port': port}
+            coord["ip"] = ip
+            coord["port"] = port
+            lsUser[name] = coord
+            self.__lsUser = lsUser
+            print(lsUser)
+            return self.__lsUser
 
     def _user(self):
+        self._client()
         for i in self.__lsUser.keys():
             print(i)
 

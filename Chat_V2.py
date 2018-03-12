@@ -13,7 +13,7 @@ class Chat:
         self.__pseudo = input("enter username: \n")
         self.__port = 5000
         self.__ip = None
-        self._lsUser = {}
+        self.__lsUser = {}
 
     def run(self):
         self.__address = None
@@ -63,7 +63,7 @@ class Chat:
         self.__address = None
 
     def _join(self, param):
-        tokens = self._lsUser[param]
+        tokens = self.__lsUser[param]
         if len(tokens) == 2:
             try:
                 self.__address = (param, (tokens['ip'], int(tokens['port'])))
@@ -97,8 +97,8 @@ class Chat:
         print(self.__address)
 
     def _user(self):
-        self.__user = subprocess.Popen(["whoami"], stdout=subprocess.PIPE)
-        print(self.__user.communicate()[0].decode().rstrip())
+        for i in self.__lsUser.keys():
+            print(i)
 
     def _server(self, param):
         self.__s = socket.socket()
@@ -114,7 +114,12 @@ class Chat:
                     sent = self.__s.send(msg[totalsent:])
                     totalsent += sent
                 data = self.__s.recv(1024).decode()
-                return data
+                print(data)
+                self.__pseudo = data[0]
+                self.__ip = data[1]
+                self.__port = data[2]
+                self.__lsUser[data[0]] = {"ip": self.__ip, "port": self.__port}
+                return self.__lsUser
             except OSError:
                 print("Communication error with the server")
 

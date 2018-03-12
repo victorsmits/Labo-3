@@ -107,7 +107,14 @@ class Chat:
         if len(tokens) == 2:
             try:
                 self.__s.connect((tokens[0], int(tokens[1])))
-                self.__address = (tokens[0], int(tokens[1]))
+                totalsent = 0
+                msg = pickle.dumps(self.__pseudo.encode())
+                self.__s.send(struct.pack('I', len(msg)))
+                while totalsent < len(msg):
+                    sent = self.__s.send(msg[totalsent:])
+                    totalsent += sent
+                data = self.__s.recv(1024).decode()
+                return data
             except OSError:
                 print("Communication error with the server")
 

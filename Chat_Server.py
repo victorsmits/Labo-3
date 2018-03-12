@@ -4,7 +4,7 @@ import struct
 import sys
 
 
-SERVERADDRESS = (socket.gethostname(), 6000)
+SERVERADDRESS = ('172.17.32.215', 6000)
 
 
 class Server:

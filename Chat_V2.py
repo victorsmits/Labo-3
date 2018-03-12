@@ -107,14 +107,7 @@ class Chat:
         if len(tokens) == 2:
             try:
                 self.__s.connect((tokens[0], int(tokens[1])))
-                totalsent = 0
-                msg = pickle.dumps(self.__pseudo.encode())
-                self.__s.send(struct.pack('I', len(msg)))
-                while totalsent < len(msg):
-                    sent = self.__s.send(msg[totalsent:])
-                    totalsent += sent
-                data = self.__s.recv(1024).decode()
-                print(data)
+                data = self._send_request(self.__pseudo)
                 self.__pseudo = data[0]
                 self.__ip = data[1]
                 self.__port = data[2]
@@ -123,8 +116,16 @@ class Chat:
             except OSError:
                 print("Communication error with the server")
 
-    def _send_pseudo(self):
-        pass
+    def _send_request(self, message):
+        totalsent = 0
+        msg = pickle.dumps(message.encode())
+        self.__s.send(struct.pack('I', len(msg)))
+        while totalsent < len(msg):
+            sent = self.__s.send(msg[totalsent:])
+            totalsent += sent
+        data = self.__s.recv(1024).decode()
+        print(data)
+        return data
 
 
 if __name__ == '__main__':

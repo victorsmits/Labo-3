@@ -7,7 +7,7 @@ import pickle
 from datetime import datetime
 
 
-#test 8
+# test 8
 # test branch
 
 class Chat:
@@ -47,23 +47,24 @@ class Chat:
                 print('Command inconnue:', command)
 
     def _chat(self):
-        s = socket.socket(type=socket.SOCK_DGRAM)
-        s.settimeout(0.5)
-        host = socket.gethostname()
-        port = self.__port
-        s.bind((host, port))
-        self.__s = s
-        print('Écoute sur {}:{}'.format(host, port))
+        self.__s = socket.socket(type=socket.SOCK_DGRAM)
+        self.__s.settimeout(0.5)
+        self.__s.bind((socket.gethostname(), self.__port))
+        print('Écoute sur {}:{}'.format(socket.gethostname(), self.__port))
         threading.Thread(target=self._receive).start()
 
     def _exit(self):
-        self._send("disconnect")
+        # self._send_request("disconnect")
         self.__running = False
         self.__address = None
         self.__s.close()
 
     def _quit(self):
-        self.__address = None
+        try:
+            print("Disconnected from " + str(self.__address[0]))
+            self.__address = None
+        except TypeError:
+            print("You're not connected to anyone")
 
     def _join(self, param):
         tokens = self.__lsUser[param]
@@ -104,20 +105,20 @@ class Chat:
                     return
 
     def _client(self):
-        list = self._send_request("clients")
+        Client_List = self._send_request('clients')
         lsUser = {}
-        for i in list.split('\n')[:-1]:
+        for i in Client_List.split('|'):
             data = i.split(" ")
             name = data[0]
             ip = data[1]
             port = data[2]
-            coord = {'ip': ip, 'port': port}
+            coord = {'ip': None, 'port': None}
             coord["ip"] = ip
             coord["port"] = port
             lsUser[name] = coord
             self.__lsUser = lsUser
-            print(lsUser)
-            return self.__lsUser
+        print(self.__lsUser)
+        return self.__lsUser
 
     def _user(self):
         self._client()
@@ -125,30 +126,29 @@ class Chat:
             print(i)
 
     def _server(self, param):
-        self.__s = socket.socket()
+        self.__t = socket.socket()
         tokens = param.split(' ')
         print(tokens)
         if len(tokens) == 2:
             try:
-                self.__s.connect((tokens[0], int(tokens[1])))
+                self.__t.connect((tokens[0], int(tokens[1])))
                 data = self._send_request(self.__pseudo)
                 self.__pseudo = data[0]
                 self.__ip = data[1]
                 self.__port = data[2]
                 self.__lsUser[data[0]] = {"ip": self.__ip, "port": self.__port}
-                return self.__lsUser
             except OSError:
                 print("Communication error with the server")
 
     def _send_request(self, message):
         totalsent = 0
         msg = pickle.dumps(message.encode())
-        self.__s.send(struct.pack('I', len(msg)))
+        self.__t.send(struct.pack('I', len(msg)))
         while totalsent < len(msg):
-            sent = self.__s.send(msg[totalsent:])
+            sent = self.__t.send(msg[totalsent:])
             totalsent += sent
-        data = self.__s.recv(1024).decode()
-        print(data)
+        data = self.__t.recv(1024).decode()
+        print('data:', type(data), data)
         return data
 
 

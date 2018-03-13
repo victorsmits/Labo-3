@@ -131,6 +131,7 @@ class Chat:
         print(tokens)
         if len(tokens) == 2:
             try:
+                #SERVER = ('0.0.0.0', 7000)
                 self.__t.connect((tokens[0], int(tokens[1])))
                 data = self._send_request(self.__pseudo)
                 self.__pseudo = data[0]
@@ -146,8 +147,10 @@ class Chat:
         self.__t.send(struct.pack('I', len(msg)))
         while totalsent < len(msg):
             sent = self.__t.send(msg[totalsent:])
+            print('sent')
             totalsent += sent
         data = self.__t.recv(1024).decode()
+        print('totalsent')
         print('data:', type(data), data)
         return data
 

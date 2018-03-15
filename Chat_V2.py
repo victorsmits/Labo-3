@@ -27,7 +27,13 @@ class Chat:
             '/client': self._client,
             '/user': self._user,
             '/server': self._server,
+            '/off': self._off_serv,
         }
+        print('\n''list of command: ')
+        for i in handlers.keys():
+            print(i)
+        print('\n'"first connect to the server by typing /server ip ports")
+        print("type /off to disconnect from de server")
 
         while self.__running:
             line = sys.stdin.readline().rstrip() + ' '
@@ -36,10 +42,10 @@ class Chat:
             param = line[line.index(' ') + 1:].rstrip()
             # Call the command handler
             if command in handlers:
-                # try:
-                handlers[command]() if param == '' else handlers[command](param)
-                # except:
-                # print("Erreur lors de l'exécution de la commande.")
+                try:
+                    handlers[command]() if param == '' else handlers[command](param)
+                except:
+                    print("Erreur lors de l'exécution de la commande.")
             else:
                 print('Command inconnue:', command)
 
@@ -53,12 +59,18 @@ class Chat:
         self.__s = s
         threading.Thread(target=self._receive).start()
 
-    def _exit(self):
+    def _off_serv(self):
         self._send_request("disconnect")
-        self.__running = False
-        self.__address = None
-        self.__s.close()
-        self.__t.close()
+
+    def _exit(self):
+        try:
+            self.__running = False
+            self.__address = None
+            self.__s.close()
+            self._send_request("disconnect")
+            self.__t.close()
+        except:
+            pass
 
     def _quit(self):
         try:

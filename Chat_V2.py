@@ -79,16 +79,16 @@ class Chat:
 
     def _send(self, param):
         if self.__address is not None:
-            #try:
-            print("To " + "[" + self.__address[0] + "]" + ": " + param)
-            message = (self.__pseudo + "|" + param).encode()
-            print(self.__address[1])
-            totalsent = 0
-            while totalsent < len(message):
-                sent = self.__s.sendto(message[totalsent:], self.__address[1])
-                totalsent += sent
-           # except OSError:
-                #print('Error while sending the message')
+            try:
+                print("To " + "[" + self.__address[0] + "]" + ": " + param)
+                message = (self.__pseudo + "|" + param).encode()
+                print(self.__address[1])
+                totalsent = 0
+                while totalsent < len(message):
+                    sent = self.__s.sendto(message[totalsent:], self.__address[1])
+                    totalsent += sent
+            except OSError:
+                print('Error while sending the message')
 
     def _receive(self):
         if self.__s is not None:
@@ -141,7 +141,6 @@ class Chat:
                 self._chat()
             except OSError:
                 print("Communication error with the server")
-
     def _send_request(self, message):
         self.__t = socket.socket()
         if not self.__state:

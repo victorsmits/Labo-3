@@ -2,7 +2,7 @@ import socket
 import struct
 import pickle
 
-# SERVERADDRESS = (socket.gethostname(), 7000)
+#SERVERADDRESS = (socket.gethostname(), 7000)
 SERVERADDRESS = ('0.0.0.0', 7000)
 
 
@@ -17,20 +17,26 @@ class Server:
     def run(self):
         self.__s.listen()
         while True:
+            print("while True")
             client, addr = self.__s.accept()
             clt = self._receive(client)
-            print(clt)
+            print('data:', clt)
             try:
                 if clt == 'clients':
                     print('clients request')
                     self._handle(client)
+
+                elif clt == 'disconnect':
+                    for i, j in self.__clients.items():
+                        if j[0] == addr[0]:
+                            del self.__clients[i]
                 else:
                     self.__clients[clt] = addr
                     client.send(("{} {} {}".format(clt, addr[0], addr[1])).encode())
-                print(self.__clients)
+                print(self.__clients, '\n')
                 client.close()
             except OSError:
-                print('Error with the reception of message')
+               print('Error with the reception of message')
 
     # fonction receive to get a message from the client
     def _receive(self, client):

@@ -12,6 +12,8 @@ from datetime import datetime
 
 class Chat:
     def __init__(self):
+        self.__SERVER = None
+        self.__state= False
         self.__s = socket.socket()
         self.__pseudo = input("enter username: \n")
         self.__port = 5000
@@ -39,10 +41,10 @@ class Chat:
             param = line[line.index(' ') + 1:].rstrip()
             # Call the command handler
             if command in handlers:
-                try:
-                    handlers[command]() if param == '' else handlers[command](param)
-                except:
-                    print("Erreur lors de l'exécution de la commande.")
+                #try:
+                handlers[command]() if param == '' else handlers[command](param)
+                #except:
+                   # print("Erreur lors de l'exécution de la commande.")
             else:
                 print('Command inconnue:', command)
 
@@ -54,10 +56,11 @@ class Chat:
         threading.Thread(target=self._receive).start()
 
     def _exit(self):
-        # self._send_request("disconnect")
+        self._send_request("disconnect")
         self.__running = False
         self.__address = None
         self.__s.close()
+        self.__t.close()
 
     def _quit(self):
         try:
@@ -77,14 +80,15 @@ class Chat:
 
     def _send(self, param):
         if self.__address is not None:
-            try:
-                message = param.encode()
-                totalsent = 0
-                while totalsent < len(message):
-                    sent = self.__s.sendto(message[totalsent:], self.__address)
-                    totalsent += sent
-            except OSError:
-                print('Erreur lors de la réception du message.')
+            #try:
+            print("To " + "[" + self.__address[0] + "]" + ": " + param)
+            message = (self.__pseudo + " " + param).encode()
+            totalsent = 0
+            while totalsent < len(message):
+                sent = self.__s.sendto(message[totalsent:], self.__address[1])
+                totalsent += sent
+           # except OSError:
+                #print('Error while sending the message')
 
     def _receive(self):
         if self.__s is not None:
@@ -107,7 +111,7 @@ class Chat:
     def _client(self):
         Client_List = self._send_request('clients')
         lsUser = {}
-        for i in Client_List.split('|'):
+        for i in Client_List.split('|')[:-1]:
             data = i.split(" ")
             name = data[0]
             ip = data[1]
@@ -117,7 +121,7 @@ class Chat:
             coord["port"] = port
             lsUser[name] = coord
             self.__lsUser = lsUser
-        print(self.__lsUser)
+        #print(self.__lsUser)
         return self.__lsUser
 
     def _user(self):
@@ -126,13 +130,11 @@ class Chat:
             print(i)
 
     def _server(self, param):
-        self.__t = socket.socket()
         tokens = param.split(' ')
-        print(tokens)
+        #print(tokens)
         if len(tokens) == 2:
             try:
-                #SERVER = ('0.0.0.0', 7000)
-                self.__t.connect((tokens[0], int(tokens[1])))
+                self.__SERVER = (tokens[0], int(tokens[1]))
                 data = self._send_request(self.__pseudo)
                 self.__pseudo = data[0]
                 self.__ip = data[1]
@@ -142,16 +144,22 @@ class Chat:
                 print("Communication error with the server")
 
     def _send_request(self, message):
+        self.__t = socket.socket()
+        if not self.__state:
+            #print(self.__SERVER)
+            self.__t.connect(self.__SERVER)
         totalsent = 0
         msg = pickle.dumps(message.encode())
         self.__t.send(struct.pack('I', len(msg)))
         while totalsent < len(msg):
             sent = self.__t.send(msg[totalsent:])
-            print('sent')
+            #print('sent')
             totalsent += sent
         data = self.__t.recv(1024).decode()
-        print('totalsent')
-        print('data:', type(data), data)
+       # print('totalsent')
+       # print('data:', type(data), data)
+        self.__t.close()
+        self.__state = False
         return data
 
 

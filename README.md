@@ -1,4 +1,4 @@
-# Labo-3
+# How to use the chat-box
 
 Pour utiliser le chat et le server vous devez télécharger les fichier chat_V2.py et chat_server.py .
 Pour commencer lancer les 2 programme dans le terminale de commande.

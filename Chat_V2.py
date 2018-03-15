@@ -1,7 +1,6 @@
 import socket
 import sys
 import threading
-import subprocess
 import struct
 import pickle
 from datetime import datetime
@@ -37,10 +36,10 @@ class Chat:
             param = line[line.index(' ') + 1:].rstrip()
             # Call the command handler
             if command in handlers:
-                #try:
+                # try:
                 handlers[command]() if param == '' else handlers[command](param)
-                #except:
-                   # print("Erreur lors de l'exécution de la commande.")
+                # except:
+                # print("Erreur lors de l'exécution de la commande.")
             else:
                 print('Command inconnue:', command)
 
@@ -49,7 +48,7 @@ class Chat:
         s.settimeout(0.5)
         host = self.__lsUser[self.__pseudo]["ip"]
         port = self.__lsUser[self.__pseudo]["port"]
-        s.bind((host,int(port)))
+        s.bind((host, int(port)))
         print("listen on {} {}".format(host, port))
         self.__s = s
         threading.Thread(target=self._receive).start()
@@ -141,6 +140,7 @@ class Chat:
                 self._chat()
             except OSError:
                 print("Communication error with the server")
+
     def _send_request(self, message):
         self.__t = socket.socket()
         if not self.__state:
@@ -158,7 +158,4 @@ class Chat:
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 3:
-        Chat().run()
-    else:
-        Chat().run()
+    Chat().run()

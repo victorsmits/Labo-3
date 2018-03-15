@@ -20,14 +20,14 @@ class Chat:
         self.__running = True
 
         handlers = {
-            '/exit': self._exit,
-            '/quit': self._quit,
-            '/join': self._join,
-            '/send': self._send,
-            '/client': self._client,
-            '/user': self._user,
-            '/server': self._server,
-            '/off': self._off_serv,
+            '/exit': self._exit,  # exit chat application
+            '/quit': self._quit,  # quit connection with user
+            '/join': self._join,  # join a user to chat
+            '/send': self._send,  # send message to user
+            '/client': self._client,  # refresh user list
+            '/user': self._user,  # show user connected to server
+            '/server': self._server,  # connection to the server
+            '/off': self._off_serv,  # disconnection to the server
         }
         print('\n''list of command: ')
         for i in handlers.keys():
@@ -69,6 +69,7 @@ class Chat:
             self.__s.close()
             self._send_request("disconnect")
             self.__t.close()
+
         except:
             pass
 

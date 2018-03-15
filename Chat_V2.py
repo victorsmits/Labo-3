@@ -128,9 +128,7 @@ class Chat:
             name = data[0]
             ip = data[1]
             port = data[2]
-            coord = {'ip': None, 'port': None}
-            coord["ip"] = ip
-            coord["port"] = port
+            coord = {"ip": ip, "port": port}
             lsUser[name] = coord
             self.__lsUser = lsUser
         return self.__lsUser

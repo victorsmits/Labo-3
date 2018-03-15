@@ -3,8 +3,8 @@ import struct
 import pickle
 import sys
 
-# SERVERADDRESS = (socket.gethostname(), 6000)
-SERVERADDRESS = ('0.0.0.0', 6000)
+#SERVERADDRESS = (socket.gethostname(), 6000)
+#SERVERADDRESS = ('0.0.0.0', 6000)
 
 
 # python main.py server
@@ -61,4 +61,10 @@ class Server:
 
 
 if __name__ == '__main__':
-    Server().run()
+    if sys.argv[1] == 'local':
+        SERVERADDRESS = ('0.0.0.0', 6000)
+        Server().run()
+
+    elif sys.argv[1] == 'distant':
+        SERVERADDRESS = (socket.gethostname(), 6000)
+        Server().run()

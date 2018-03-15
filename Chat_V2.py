@@ -7,15 +7,11 @@ import pickle
 from datetime import datetime
 
 
-# test 8
-# test branch
-
 class Chat:
     def __init__(self):
-        self.__SERVER = None
-        self.__state= False
-        self.__s = socket.socket()
         self.__pseudo = input("enter username: \n")
+        self.__SERVER = None
+        self.__state = False
         self.__port = None
         self.__ip = None
         self.__lsUser = {}
@@ -23,7 +19,7 @@ class Chat:
     def run(self):
         self.__address = None
         self.__running = True
-        threading.Thread(target=self._receive).start()
+
         handlers = {
             '/exit': self._exit,
             '/quit': self._quit,
@@ -49,10 +45,13 @@ class Chat:
                 print('Command inconnue:', command)
 
     def _chat(self):
-        self.__s = socket.socket(type=socket.SOCK_DGRAM)
-        self.__s.settimeout(0.5)
-        self.__s.bind((socket.gethostname(), self.__port))
-        print('Écoute sur {}:{}'.format(socket.gethostname(), self.__port))
+        s = socket.socket(type=socket.SOCK_DGRAM)
+        s.settimeout(0.5)
+        host = self.__lsUser[self.__pseudo]["ip"]
+        port = self.__lsUser[self.__pseudo]["port"]
+        s.bind((host,int(port)))
+        print("listen on {} {}".format(host, port))
+        self.__s = s
         threading.Thread(target=self._receive).start()
 
     def _exit(self):
@@ -82,7 +81,7 @@ class Chat:
         if self.__address is not None:
             #try:
             print("To " + "[" + self.__address[0] + "]" + ": " + param)
-            message = (self.__pseudo + " " + param).encode()
+            message = (self.__pseudo + "|" + param).encode()
             print(self.__address[1])
             totalsent = 0
             while totalsent < len(message):
@@ -97,8 +96,8 @@ class Chat:
                 try:
                     data, address = self.__s.recvfrom(1024)
                     msg = data.decode()
-                    pseudo = msg.split(" ")[0]
-                    message = msg.split(" ")[1]
+                    pseudo = msg.split("|")[0]
+                    message = msg.split("|")[1]
                     print(datetime.now().strftime('%H:%M:%S') + " [" + pseudo + "]" + ": " + message)
                     if pseudo not in self.__lsUser:
                         print("Type \"/join " + pseudo + "\" to start chatting with " + pseudo)
@@ -122,7 +121,6 @@ class Chat:
             coord["port"] = port
             lsUser[name] = coord
             self.__lsUser = lsUser
-        #print(self.__lsUser)
         return self.__lsUser
 
     def _user(self):
@@ -132,34 +130,29 @@ class Chat:
 
     def _server(self, param):
         tokens = param.split(' ')
-        #print(tokens)
         if len(tokens) == 2:
             try:
                 self.__SERVER = (tokens[0], int(tokens[1]))
                 data = self._send_request(self.__pseudo)
-                self.__pseudo = data[0]
                 self.__ip = data[1]
                 self.__port = data[2]
-                self.__lsUser[data[0]] = {"ip": self.__ip, "port": self.__port}
+                self.__lsUser[self.__pseudo] = {"ip": self.__ip, "port": self.__port}
                 self._user()
+                self._chat()
             except OSError:
                 print("Communication error with the server")
 
     def _send_request(self, message):
         self.__t = socket.socket()
         if not self.__state:
-            #print(self.__SERVER)
             self.__t.connect(self.__SERVER)
         totalsent = 0
         msg = pickle.dumps(message.encode())
         self.__t.send(struct.pack('I', len(msg)))
         while totalsent < len(msg):
             sent = self.__t.send(msg[totalsent:])
-            #print('sent')
             totalsent += sent
         data = self.__t.recv(1024).decode()
-       # print('totalsent')
-       # print('data:', type(data), data)
         self.__t.close()
         self.__state = False
         return data

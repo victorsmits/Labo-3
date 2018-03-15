@@ -3,7 +3,7 @@ import struct
 import pickle
 
 #SERVERADDRESS = (socket.gethostname(), 7000)
-SERVERADDRESS = ('0.0.0.0', 7000)
+SERVERADDRESS = ('0.0.0.0', 6000)
 
 
 # python main.py server
@@ -28,8 +28,11 @@ class Server:
 
                 elif clt == 'disconnect':
                     for i, j in self.__clients.items():
+                        print(j)
                         if j[0] == addr[0]:
-                            del self.__clients[i]
+                            x = i
+                    del self.__clients[x]
+                    print(self.__clients)
                 else:
                     self.__clients[clt] = addr
                     client.send(("{} {} {}".format(clt, addr[0], addr[1])).encode())

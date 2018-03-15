@@ -16,7 +16,7 @@ class Chat:
         self.__state= False
         self.__s = socket.socket()
         self.__pseudo = input("enter username: \n")
-        self.__port = 5000
+        self.__port = None
         self.__ip = None
         self.__lsUser = {}
 
@@ -83,6 +83,7 @@ class Chat:
             #try:
             print("To " + "[" + self.__address[0] + "]" + ": " + param)
             message = (self.__pseudo + " " + param).encode()
+            print(self.__address[1])
             totalsent = 0
             while totalsent < len(message):
                 sent = self.__s.sendto(message[totalsent:], self.__address[1])
@@ -140,6 +141,7 @@ class Chat:
                 self.__ip = data[1]
                 self.__port = data[2]
                 self.__lsUser[data[0]] = {"ip": self.__ip, "port": self.__port}
+                self._user()
             except OSError:
                 print("Communication error with the server")
 

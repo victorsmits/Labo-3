@@ -4,27 +4,30 @@ import threading
 import subprocess
 import struct
 import pickle
+from datetime import datetime
 
-#test 2
+
+# test 8
 # test branch
 
 class Chat:
     def __init__(self):
+        self.__s = socket.socket()
         self.__pseudo = input("enter username: \n")
         self.__port = 5000
         self.__ip = None
-        self._lsUser = {}
+        self.__lsUser = {}
 
     def run(self):
         self.__address = None
         self.__running = True
-        #threading.Thread(target=self._receive).start()
+        threading.Thread(target=self._receive).start()
         handlers = {
             '/exit': self._exit,
             '/quit': self._quit,
             '/join': self._join,
             '/send': self._send,
-            '/address': self._client,
+            '/client': self._client,
             '/user': self._user,
             '/server': self._server,
         }
@@ -44,26 +47,27 @@ class Chat:
                 print('Command inconnue:', command)
 
     def _chat(self):
-        s = socket.socket(type=socket.SOCK_DGRAM)
-        s.settimeout(0.5)
-        host = socket.gethostname()
-        port = self.__port
-        s.bind((host, port))
-        self.__s = s
-        print('Écoute sur {}:{}'.format(host, port))
-        #threading.Thread(target=self._receive).start()
+        self.__s = socket.socket(type=socket.SOCK_DGRAM)
+        self.__s.settimeout(0.5)
+        self.__s.bind((socket.gethostname(), self.__port))
+        print('Écoute sur {}:{}'.format(socket.gethostname(), self.__port))
+        threading.Thread(target=self._receive).start()
 
     def _exit(self):
-        self._send("disconnect")
+        # self._send_request("disconnect")
         self.__running = False
         self.__address = None
         self.__s.close()
 
     def _quit(self):
-        self.__address = None
+        try:
+            print("Disconnected from " + str(self.__address[0]))
+            self.__address = None
+        except TypeError:
+            print("You're not connected to anyone")
 
     def _join(self, param):
-        tokens = self._lsUser[param]
+        tokens = self.__lsUser[param]
         if len(tokens) == 2:
             try:
                 self.__address = (param, (tokens['ip'], int(tokens['port'])))
@@ -87,39 +91,68 @@ class Chat:
             while self.__running:
                 try:
                     data, address = self.__s.recvfrom(1024)
-                    print(data.decode())
+                    msg = data.decode()
+                    pseudo = msg.split(" ")[0]
+                    message = msg.split(" ")[1]
+                    print(datetime.now().strftime('%H:%M:%S') + " [" + pseudo + "]" + ": " + message)
+                    if pseudo not in self.__lsUser:
+                        print("Type \"/join " + pseudo + "\" to start chatting with " + pseudo)
+                        self._client()
+
                 except socket.timeout:
                     pass
                 except OSError:
                     return
 
     def _client(self):
-        print(self.__address)
+        Client_List = self._send_request('clients')
+        lsUser = {}
+        for i in Client_List.split('|'):
+            data = i.split(" ")
+            name = data[0]
+            ip = data[1]
+            port = data[2]
+            coord = {'ip': None, 'port': None}
+            coord["ip"] = ip
+            coord["port"] = port
+            lsUser[name] = coord
+            self.__lsUser = lsUser
+        print(self.__lsUser)
+        return self.__lsUser
 
     def _user(self):
-        self.__user = subprocess.Popen(["whoami"], stdout=subprocess.PIPE)
-        print(self.__user.communicate()[0].decode().rstrip())
+        self._client()
+        for i in self.__lsUser.keys():
+            print(i)
 
     def _server(self, param):
-        self.__s = socket.socket()
+        self.__t = socket.socket()
         tokens = param.split(' ')
         print(tokens)
         if len(tokens) == 2:
             try:
-                self.__s.connect((tokens[0], int(tokens[1])))
-                totalsent = 0
-                msg = pickle.dumps(self.__pseudo.encode())
-                self.__s.send(struct.pack('I', len(msg)))
-                while totalsent < len(msg):
-                    sent = self.__s.send(msg[totalsent:])
-                    totalsent += sent
-                data = self.__s.recv(1024).decode()
-                return data
+                #SERVER = ('0.0.0.0', 7000)
+                self.__t.connect((tokens[0], int(tokens[1])))
+                data = self._send_request(self.__pseudo)
+                self.__pseudo = data[0]
+                self.__ip = data[1]
+                self.__port = data[2]
+                self.__lsUser[data[0]] = {"ip": self.__ip, "port": self.__port}
             except OSError:
                 print("Communication error with the server")
 
-    def _send_pseudo(self):
-        pass
+    def _send_request(self, message):
+        totalsent = 0
+        msg = pickle.dumps(message.encode())
+        self.__t.send(struct.pack('I', len(msg)))
+        while totalsent < len(msg):
+            sent = self.__t.send(msg[totalsent:])
+            print('sent')
+            totalsent += sent
+        data = self.__t.recv(1024).decode()
+        print('totalsent')
+        print('data:', type(data), data)
+        return data
 
 
 if __name__ == '__main__':

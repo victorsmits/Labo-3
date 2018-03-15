@@ -5,8 +5,10 @@ import struct
 import pickle
 from datetime import datetime
 
-SERVERADDRESS = (socket.gethostname(), 6000)
-#python main.py server
+SERVERADDRESS = ('0.0.0.0', 7000)
+
+
+# python main.py server
 
 
 class Server:
@@ -59,7 +61,7 @@ class Chat:
         self.__clients_list = {}
 
     def run(self):
-        #Command for the client
+        # Command for the client
         handlers = {
             '/exit': self._exit,
             '/quit': self._quit,
@@ -121,7 +123,7 @@ class Chat:
     def _send(self, param):
         if self.__address is not None:
             try:
-                print("To " + "[" + self.__address[0] + "]" + ": "+param)
+                print("To " + "[" + self.__address[0] + "]" + ": " + param)
                 message = (self.__pseudo + " " + param).encode()
                 totalsent = 0
                 while totalsent < len(message):
@@ -162,7 +164,7 @@ class Chat:
             name = data[0]
             ip = data[1]
             port = data[2]
-            coords = {"ip":None,"port":None}
+            coords = {"ip": None, "port": None}
             coords["ip"] = ip
             coords["port"] = port
             List_of_clients[name] = coords

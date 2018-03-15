@@ -2,8 +2,8 @@ import socket
 import struct
 import pickle
 
-#SERVERADDRESS = (socket.gethostname(), 7000)
-SERVERADDRESS = ('0.0.0.0', 6000)
+SERVERADDRESS = (socket.gethostname(), 6000)
+#SERVERADDRESS = ('0.0.0.0', 6000)
 
 
 # python main.py server
@@ -31,7 +31,7 @@ class Server:
                         print(j)
                         if j[0] == addr[0]:
                             x = i
-                    del self.__clients[x]
+                            del self.__clients[x]
                     print(self.__clients)
                 else:
                     self.__clients[clt] = addr
